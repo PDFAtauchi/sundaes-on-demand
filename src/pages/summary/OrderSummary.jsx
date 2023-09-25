@@ -27,6 +27,7 @@ export default function OrderSummary() {
       <ul>{scoopList}</ul>
       <h2>Toppings: {formatCurrency(totals.toppings)}</h2>
       <ul>{toppingList}</ul>
+      <h2>Grand total: {formatCurrency(totals.scoops + totals.toppings)}</h2>
       <SummaryForm />
     </div>
   );
