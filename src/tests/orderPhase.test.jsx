@@ -87,3 +87,69 @@ test("order phases for happy path", async () => {
   const toppingsTotal = await screen.findByText("Toppings total: $0.00");
   expect(toppingsTotal).toBeInTheDocument();
 });
+
+test("Toppings header is not on summary page if no toppings ordered", async () => {
+  const user = userEvent.setup();
+
+  render(<App />);
+
+  const vanillaInput = await screen.findByRole("spinbutton", {
+    name: "Vanilla",
+  });
+  await user.clear(vanillaInput);
+  await user.type(vanillaInput, "1");
+
+  const chocolateInput = await screen.findByRole("spinbutton", {
+    name: "Chocolate",
+  });
+  await user.clear(chocolateInput);
+  await user.type(chocolateInput, "2");
+
+  const OrderSummaryButton = screen.getByRole("button", {
+    name: /order sundae/i,
+  });
+  await user.click(OrderSummaryButton);
+
+  const scoopsHeading = screen.getByRole("heading", { name: "Scoops: $6.00" });
+  expect(scoopsHeading).toBeInTheDocument();
+
+  const toppingsHeading = screen.queryByRole("heading", { name: /Toppings/i });
+  expect(toppingsHeading).not.toBeInTheDocument();
+});
+
+test("Toppings header is not on summary page if toppings ordered, then removed", async () => {
+  const user = userEvent.setup();
+
+  render(<App />);
+
+  const vanillaInput = await screen.findByRole("spinbutton", {
+    name: "Vanilla",
+  });
+  await user.clear(vanillaInput);
+  await user.type(vanillaInput, "1");
+
+  const cherriesInput = await screen.findByRole("checkbox", {
+    name: "Cherries",
+  });
+  await user.click(cherriesInput);
+
+  expect(cherriesInput).toBeChecked();
+  const toppingsTotal = screen.getByText("Toppings total: $", { exact: false });
+  expect(toppingsTotal).toHaveTextContent("1.50");
+
+  // remove the topping
+  await user.click(cherriesInput);
+  expect(cherriesInput).not.toBeChecked();
+  expect(toppingsTotal).toHaveTextContent("0.00");
+
+  const OrderSummaryButton = screen.getByRole("button", {
+    name: /order sundae/i,
+  });
+  await user.click(OrderSummaryButton);
+
+  const scoopsHeading = screen.getByRole("heading", { name: "Scoops: $2.00" });
+  expect(scoopsHeading).toBeInTheDocument();
+
+  const toppingsHeading = screen.queryByRole("heading", { name: /toppings/i });
+  expect(toppingsHeading).not.toBeInTheDocument();
+});
